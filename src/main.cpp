@@ -1,6 +1,85 @@
 #define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
 
+struct sSpaceObject {
+	// life cycle data
+	bool alive;
+	
+	// position/movement/orientation/size data
+	olc::vf2d pos;
+	olc::vf2d origin;
+	olc::vf2d vel;
+	float angle;
+	olc::vf2d scale;
+
+	// drawing
+	olc::Sprite *sprite;
+	olc::Decal *decal;
+
+	float travel = 0.0f;
+	float maxTravel = 0.0f;
+	olc::Pixel tint = olc::WHITE;
+
+	void Update(olc::PixelGameEngine &pge)
+	{
+		olc::vf2d p = this->pos;
+		bool x = false, y = false;
+
+		if(p.x < 0.0f)
+		{
+			p.x += (float)pge.ScreenWidth();
+			x = true;
+		}				
+		
+		if(p.x >= (float)pge.ScreenWidth() && !x)
+			p.x -= (float)pge.ScreenWidth();
+
+
+		if(p.y < 0.0f)
+		{
+			p.y += (float)pge.ScreenHeight();
+			y = true;
+		}				
+		
+		if(p.y >= (float)pge.ScreenHeight() && !y)
+			p.y -= (float)pge.ScreenHeight();
+
+
+		this->pos = p;
+	}
+
+	void Draw(olc::PixelGameEngine &pge)
+	{
+		olc::vf2d p = this->pos;
+		
+		bool x = false, y = false;
+		
+		if(this->pos.x - ((this->sprite->width * this->scale.x) / 2) < 0.0f)
+		{
+			p.x += (float)pge.ScreenWidth();
+			x = true;
+		}
+
+		if(this->pos.x + ((this->sprite->width * this->scale.x) / 2) >= (float)pge.ScreenWidth() && !x)
+			p.x -= (float)pge.ScreenWidth();
+		
+		if(this->pos.y - ((this->sprite->height * this->scale.y) / 2) < 0.0f)
+		{
+			p.y += (float)pge.ScreenHeight();
+			y = true;
+		}
+
+		if(this->pos.y + ((this->sprite->height * this->scale.y) / 2) >= (float)pge.ScreenHeight() && !y)
+			p.y -= (float)pge.ScreenHeight();
+
+		if(p.x != this->pos.x || p.y != this->pos.y)
+			pge.DrawRotatedDecal(p, this->decal, this->angle, this->origin, this->scale, this->tint);
+		
+		pge.DrawRotatedDecal(this->pos, this->decal, this->angle, this->origin, this->scale, this->tint);
+	}
+};
+
+
 class PGE_Asteroids : public olc::PixelGameEngine
 {
 public:
@@ -323,84 +402,6 @@ private:
 	olc::Decal *decalExplosion;
 	olc::Decal *decalShip;
 
-	struct sSpaceObject {
-		// life cycle data
-		bool alive;
-		
-		// position/movement/orientation/size data
-		olc::vf2d pos;
-		olc::vf2d origin;
-		olc::vf2d vel;
-		float angle;
-		olc::vf2d scale;
-
-		// drawing
-		olc::Sprite *sprite;
-		olc::Decal *decal;
-		olc::PixelGameEngine *pge;
-
-		float travel = 0.0f;
-		float maxTravel = 0.0f;
-		olc::Pixel tint = olc::WHITE;
-
-		void Update()
-		{
-			olc::vf2d p = this->pos;
-			bool x = false, y = false;
-
-			if(p.x < 0.0f)
-			{
-				p.x += (float)pge->ScreenWidth();
-				x = true;
-			}				
-			
-			if(p.x >= (float)pge->ScreenWidth() && !x)
-				p.x -= (float)pge->ScreenWidth();
-
-
-			if(p.y < 0.0f)
-			{
-				p.y += (float)pge->ScreenHeight();
-				y = true;
-			}				
-			
-			if(p.y >= (float)pge->ScreenHeight() && !y)
-				p.y -= (float)pge->ScreenHeight();
-
-
-			this->pos = p;
-		}
-
-		void Draw()
-		{
-			olc::vf2d p = this->pos;
-			
-			bool x = false, y = false;
-			
-			if(this->pos.x - ((this->sprite->width * this->scale.x) / 2) < 0.0f)
-			{
-				p.x += (float)pge->ScreenWidth();
-				x = true;
-			}
-
-			if(this->pos.x + ((this->sprite->width * this->scale.x) / 2) >= (float)pge->ScreenWidth() && !x)
-				p.x -= (float)pge->ScreenWidth();
-			
-			if(this->pos.y - ((this->sprite->height * this->scale.y) / 2) < 0.0f)
-			{
-				p.y += (float)pge->ScreenHeight();
-				y = true;
-			}
-
-			if(this->pos.y + ((this->sprite->height * this->scale.y) / 2) >= (float)pge->ScreenHeight() && !y)
-				p.y -= (float)pge->ScreenHeight();
-
-			if(p.x != this->pos.x || p.y != this->pos.y)
-				pge->DrawRotatedDecal(p, this->decal, this->angle, this->origin, this->scale, this->tint);
-			
-			pge->DrawRotatedDecal(this->pos, this->decal, this->angle, this->origin, this->scale, this->tint);
-		}
-	};
 	
 	void SpawnExplosion(olc::vf2d pos)
 	{
