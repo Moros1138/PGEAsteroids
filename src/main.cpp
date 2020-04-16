@@ -142,7 +142,6 @@ public:
 			{ 0.5f, 0.5f }, // scale
 			spriteShip, // sprite
 			decalShip, // decal
-			this // PGE
 		};
 
 		// Put in two asteroids
@@ -155,7 +154,6 @@ public:
 			{ 1.0f, 1.0f }, // scale
 			spriteAsteroid, // sprite
 			decalAsteroid, // decal
-			this // PGE
 		});
 
 		vecAsteroids.push_back({
@@ -167,7 +165,6 @@ public:
 			{ 1.0f, 1.0f }, // scale
 			spriteAsteroid, // sprite
 			decalAsteroid, // decal
-			this // PGE
 		});
 	}
 
@@ -193,7 +190,7 @@ public:
 		
 		// player movement
 		player.pos += player.vel * fElapsedTime;
-		player.Update();
+		player.Update(*this);
 
 		if(GetKey(olc::SPACE).bReleased && vecBullets.size() < 5)
 		{
@@ -206,7 +203,6 @@ public:
 				{ 0.8f, 0.8f }, // scale
 				spriteBullet, // sprite
 				decalBullet, // decal
-				this, // PGE
 				0.0f,
 				400.0f
 			});
@@ -218,7 +214,7 @@ public:
 			if(a.alive)
 			{
 				a.pos += a.vel * fElapsedTime;
-				a.Update();
+				a.Update(*this);
 				
 				if(a.vel.x > 0.0f)
 					a.angle += 1.0f * fElapsedTime;
@@ -247,7 +243,7 @@ public:
 			if(b.alive)
 			{
 				b.pos += b.vel *fElapsedTime;
-				b.Update();
+				b.Update(*this);
 				
 				b.travel += b.vel.mag() * fElapsedTime;
 				
@@ -295,7 +291,6 @@ public:
 									a.scale, // scale
 									spriteAsteroid, // sprite
 									decalAsteroid, // decal
-									this // PGE
 								});
 
 								vecAsteroids.push_back({
@@ -307,7 +302,6 @@ public:
 									a.scale, // scale
 									spriteAsteroid, // sprite
 									decalAsteroid, // decal
-									this // PGE
 								});
 							}
 						}
@@ -362,7 +356,6 @@ public:
 				{ 1.0f, 1.0f }, // scale
 				spriteAsteroid, // sprite
 				decalAsteroid, // decal
-				this // PGE
 			});
 
 			vecAsteroids.push_back({
@@ -374,14 +367,13 @@ public:
 				{ 1.0f, 1.0f }, // scale
 				spriteAsteroid, // sprite
 				decalAsteroid, // decal
-				this // PGE
 			});
 		}
 		
 		// DRAW EVERYTHING
 		DrawSpaceObjects(vecAsteroids);
 		DrawSpaceObjects(vecBullets);
-		player.Draw();
+		player.Draw(*this);
 		DrawSpaceObjects(vecExplosions);
 
 		DrawStringDecal({ 43.0f, 23.0f }, std::to_string(nScore), olc::BLACK, { 3.0f, 3.0f });
@@ -414,7 +406,6 @@ private:
 			{ 0.2f, 0.2f }, // scale
 			spriteExplosion, // sprite
 			decalExplosion, // decal
-			this // PGE
 		});
 	}
 
@@ -423,7 +414,7 @@ private:
 		for(auto &o : objects)
 		{
 			if(o.alive)
-				o.Draw();
+				o.Draw(*this);
 		}
 	}
 
