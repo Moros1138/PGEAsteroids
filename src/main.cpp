@@ -177,10 +177,10 @@ public:
 			return false;
 
 		if(GetKey(olc::LEFT).bHeld)
-			player.angle -= 5.0f * fElapsedTime;
+			player.angle -= 3.0f * fElapsedTime;
 
 		if(GetKey(olc::RIGHT).bHeld)
-			player.angle += 5.0f * fElapsedTime;
+			player.angle += 3.0f * fElapsedTime;
 		
 		if(GetKey(olc::UP).bHeld)
 		{
