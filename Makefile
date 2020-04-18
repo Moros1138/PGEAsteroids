@@ -17,7 +17,7 @@ SDIR=src
 
 CC=g++
 
-CFLAGS=-I./$(IDIR) -std=c++17
+CFLAGS=-I./$(IDIR) -std=c++17 -O3
 
 _OBJ = main.o
 OBJ = $(patsubst %, $(ODIR)/%,$(_OBJ))
