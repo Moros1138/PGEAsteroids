@@ -1,6 +1,9 @@
 #define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
 
+#define OLC_PGEX_PARTICLES_APP
+#include "olcPGEX_Particles.h"
+
 struct sSpaceObject {
 	// life cycle data
 	bool alive;
@@ -86,7 +89,7 @@ public:
 	PGE_Asteroids()
 	{
 		sAppName = "PGEAsteroids";
-	}
+	} 
 
 public:
 	
@@ -102,16 +105,9 @@ public:
 		spriteBullet = new olc::Sprite("assets/laserBlue01.png");
 		decalBullet = new olc::Decal(spriteBullet);
 		
-		// Explosion
-		spriteExplosion = new olc::Sprite("assets/explosion03.png");
-		decalExplosion = new olc::Decal(spriteExplosion);
-
 		// Ship
 		spriteShip = new olc::Sprite("assets/playerShip1_red.png");
 		decalShip = new olc::Decal(spriteShip);
-		
-		vecExplosions.clear();
-		ResetGame();
 		
 		// Draw Stuff
 		Clear(olc::BLACK);
@@ -123,54 +119,16 @@ public:
 			}
 		}
 
+		explosions = new olc::Particles("assets/blackSmoke17.png", olc::ParticleAnimations::StarBurstCreate, olc::ParticleAnimations::StarBurstMove, {0.7f, 0.7f});
+		explosions2 = new olc::Particles("assets/meteorBrown_big4.png", olc::ParticleAnimations::StarBurstCreate, olc::ParticleAnimations::StarBurstMove, {0.2f, 0.2f});
+
+		ResetGame();
 		return true;
 	}
 	
-	void ResetGame()
-	{
-		nScore = 0;
-		
-		vecAsteroids.clear();
-		vecBullets.clear();
-
-		player = {
-			true, // alive
-			{ ((float)ScreenWidth() / 2), ((float)ScreenHeight() / 2) }, // pos
-			{ (float)spriteShip->width / 2, (float)spriteShip->height  / 2 }, // origin
-			{ 0.0f, 0.0f }, // vel
-			0.0f, // angle
-			{ 0.5f, 0.5f }, // scale
-			spriteShip, // sprite
-			decalShip, // decal
-		};
-
-		// Put in two asteroids
-		vecAsteroids.push_back({
-			true, // alive
-			{ player.pos.x - 150.0f, player.pos.y }, // pos
-			{ (float)spriteAsteroid->width / 2, (float)spriteAsteroid->height  / 2 }, // origin
-			{ 10.0f , -64.0f }, // vel
-			0.0f, // angle
-			{ 1.0f, 1.0f }, // scale
-			spriteAsteroid, // sprite
-			decalAsteroid, // decal
-		});
-
-		vecAsteroids.push_back({
-			true, // alive
-			{ player.pos.x + 150.0f, player.pos.y }, // pos
-			{ (float)spriteAsteroid->width / 2, (float)spriteAsteroid->height  / 2 }, // origin
-			{ -10.0f , 64.0f }, // vel
-			0.0f, // angle
-			{ 1.0f, 1.0f }, // scale
-			spriteAsteroid, // sprite
-			decalAsteroid, // decal
-		});
-	}
-
 	bool OnUserUpdate(float fElapsedTime) override
 	{
-		if(!player.alive)
+		if(!player.alive || GetKey(olc::R).bPressed)
 			ResetGame();
 		
 		if(GetKey(olc::ESCAPE).bPressed)
@@ -187,14 +145,14 @@ public:
 			player.vel.x += sinf(player.angle) * 50.0f * fElapsedTime;
 			player.vel.y += -cosf(player.angle) * 50.0f * fElapsedTime;
 		}
-		
+
 		// player movement
 		player.pos += player.vel * fElapsedTime;
 		player.Update(*this);
 
-		if(GetKey(olc::SPACE).bReleased && vecBullets.size() < 5)
+		if(GetKey(olc::SPACE).bReleased /*&& listBullets.size() < 5*/)
 		{
-			vecBullets.push_back({
+			listBullets.push_back({
 				true, // alive
 				{ player.pos.x, player.pos.y }, // pos
 				{ (float)spriteBullet->width / 2, (float)spriteBullet->height  / 2 }, // origin
@@ -209,7 +167,7 @@ public:
 		}
 		
 		// asteroid movement
-		for(auto &a : vecAsteroids)
+		for(auto &a : listAsteroids)
 		{
 			if(a.alive)
 			{
@@ -230,7 +188,8 @@ public:
 				p = player.pos - a.pos;
 				if(p.mag() < aSize.mag())
 				{
-					SpawnExplosion(player.pos);
+					explosions->Spawn(player.pos);
+					explosions2->Spawn(player.pos);
 					player.alive = false;
 				}
 			
@@ -238,7 +197,7 @@ public:
 		}
 
 		// bullet movement
-		for(auto &b : vecBullets)
+		for(auto &b : listBullets)
 		{
 			if(b.alive)
 			{
@@ -253,7 +212,7 @@ public:
 					continue;
 				}
 
-				for(auto &a : vecAsteroids)
+				for(auto &a : listAsteroids)
 				{
 					if(a.alive)
 					{
@@ -275,14 +234,15 @@ public:
 
 							a.scale *= 0.7f;
 							
-							SpawnExplosion(a.pos);
-							
+							explosions->Spawn(a.pos);
+							explosions2->Spawn(a.pos);
+
 							if(a.scale.x > 0.4f)
 							{
 								float angle1 = ((float)rand() / (float)RAND_MAX) * 6.283185f;
 								float angle2 = ((float)rand() / (float)RAND_MAX) * 6.283185f;
 								
-								vecAsteroids.push_back({
+								listAsteroids.push_back({
 									true, // alive
 									a.pos, // pos
 									{ (float)spriteAsteroid->width / 2, (float)spriteAsteroid->height  / 2 }, // origin
@@ -293,7 +253,7 @@ public:
 									decalAsteroid, // decal
 								});
 
-								vecAsteroids.push_back({
+								listAsteroids.push_back({
 									true, // alive
 									a.pos, // pos
 									{ (float)spriteAsteroid->width / 2, (float)spriteAsteroid->height  / 2 }, // origin
@@ -310,44 +270,20 @@ public:
 			}
 		}
 
-		// explosion movement
-		for(auto &e : vecExplosions)
-		{
-			if(e.alive)
-			{
-				e.scale.x += e.scale.x * 2.0f * fElapsedTime;
-				e.scale.y += e.scale.y * 2.0f * fElapsedTime;
-
-				e.angle += 1.0f * fElapsedTime;
-				
-				
-				if(e.tint.a - (uint8_t)(e.tint.a * 10.0f * fElapsedTime) > 0)
-					e.tint.a -= (uint8_t)(e.tint.a * 10.0f * fElapsedTime);
-
-				if(e.scale.x > 0.5f)
-				{
-					e.alive = false;
-				}
-			}
-		}
-		
 		// remove dead asteroids		
-		vecAsteroids.erase(std::remove_if(vecAsteroids.begin(), vecAsteroids.end(), [](const sSpaceObject& s) { return !s.alive; }), vecAsteroids.end());
+		listAsteroids.remove_if([&](const sSpaceObject& s) { return !s.alive; });
 
 		// remove dead bullets
-		vecBullets.erase(std::remove_if(vecBullets.begin(), vecBullets.end(), [](const sSpaceObject& s) { return !s.alive; }), vecBullets.end());
+		listBullets.remove_if([&](const sSpaceObject& s) { return !s.alive; });
 
-		// remove dead explosions
-		vecExplosions.erase(std::remove_if(vecExplosions.begin(), vecExplosions.end(), [](const sSpaceObject& s) { return !s.alive; }), vecExplosions.end());
-
-		if(vecAsteroids.empty())
+		if(listAsteroids.empty())
 		{
 			nScore += 1000;
-			vecAsteroids.clear();
-			vecBullets.clear();
+			listAsteroids.clear();
+			listBullets.clear();
 			
 			// Put in two asteroids
-			vecAsteroids.push_back({
+			listAsteroids.push_back({
 				true, // alive
 				{ player.pos.x - 150.0f, player.pos.y }, // pos
 				{ (float)spriteAsteroid->width / 2, (float)spriteAsteroid->height  / 2 }, // origin
@@ -358,7 +294,7 @@ public:
 				decalAsteroid, // decal
 			});
 
-			vecAsteroids.push_back({
+			listAsteroids.push_back({
 				true, // alive
 				{ player.pos.x + 150.0f, player.pos.y }, // pos
 				{ (float)spriteAsteroid->width / 2, (float)spriteAsteroid->height  / 2 }, // origin
@@ -371,64 +307,91 @@ public:
 		}
 		
 		// DRAW EVERYTHING
-		DrawSpaceObjects(vecAsteroids);
-		DrawSpaceObjects(vecBullets);
+		DrawSpaceObjects(listAsteroids);
+		DrawSpaceObjects(listBullets);
 		player.Draw(*this);
-		DrawSpaceObjects(vecExplosions);
+		explosions->Draw(fElapsedTime);
+		explosions2->Draw(fElapsedTime);
 
 		DrawStringDecal({ 43.0f, 23.0f }, std::to_string(nScore), olc::BLACK, { 3.0f, 3.0f });
 		DrawStringDecal({ 40.0f, 20.0f }, std::to_string(nScore), olc::WHITE, { 3.0f, 3.0f });
 		return true;
 	}
 
+    void ResetGame()
+    {
+        nScore = 0;
+        
+        listAsteroids.clear();
+        listBullets.clear();
+
+        player = {
+            true, // alive
+            { ((float)ScreenWidth() / 2), ((float)ScreenHeight() / 2) }, // pos
+            { (float)spriteShip->width / 2, (float)spriteShip->height  / 2 }, // origin
+            { 0.0f, 0.0f }, // vel
+            0.0f, // angle
+            { 0.5f, 0.5f }, // scale
+            spriteShip, // sprite
+            decalShip, // decal
+        };
+
+        // Put in two asteroids
+        listAsteroids.push_back({
+            true, // alive
+            { player.pos.x - 150.0f, player.pos.y }, // pos
+            { (float)spriteAsteroid->width / 2, (float)spriteAsteroid->height  / 2 }, // origin
+            { 10.0f , -64.0f }, // vel
+            0.0f, // angle
+            { 1.0f, 1.0f }, // scale
+            spriteAsteroid, // sprite
+            decalAsteroid, // decal
+        });
+
+        listAsteroids.push_back({
+            true, // alive
+            { player.pos.x + 150.0f, player.pos.y }, // pos
+            { (float)spriteAsteroid->width / 2, (float)spriteAsteroid->height  / 2 }, // origin
+            { -10.0f , 64.0f }, // vel
+            0.0f, // angle
+            { 1.0f, 1.0f }, // scale
+            spriteAsteroid, // sprite
+            decalAsteroid, // decal
+        });
+    }
+
+    void DrawSpaceObjects(std::list<sSpaceObject> &objects)
+    {
+        for(auto &o : objects)
+        {
+            if(o.alive)
+                o.Draw(*this);
+        }
+    }
+
 private:
 	olc::Sprite *spriteBackground;
 	
 	olc::Sprite *spriteAsteroid;
 	olc::Sprite *spriteBullet;
-	olc::Sprite *spriteExplosion;
 	olc::Sprite *spriteShip;
 	
 	olc::Decal *decalAsteroid;
 	olc::Decal *decalBullet;
-	olc::Decal *decalExplosion;
 	olc::Decal *decalShip;
-
-	
-	void SpawnExplosion(olc::vf2d pos)
-	{
-		vecExplosions.push_back({
-			true, // alive
-			pos, // pos
-			{ (float)spriteExplosion->width / 2, (float)spriteExplosion->height  / 2 }, // origin
-			{ 0.0f , 0.0f }, // vel
-			0.0f, // angle
-			{ 0.2f, 0.2f }, // scale
-			spriteExplosion, // sprite
-			decalExplosion, // decal
-		});
-	}
-
-	void DrawSpaceObjects(std::vector<sSpaceObject> &objects)
-	{
-		for(auto &o : objects)
-		{
-			if(o.alive)
-				o.Draw(*this);
-		}
-	}
-
+    
 	int nScore;
 	sSpaceObject player;
-	std::vector<sSpaceObject> vecBullets;
-	std::vector<sSpaceObject> vecAsteroids;
-	std::vector<sSpaceObject> vecExplosions;
+	std::list<sSpaceObject> listBullets;
+	std::list<sSpaceObject> listAsteroids;
+	olc::Particles *explosions;
+	olc::Particles *explosions2;
 };
 
 int main()
 {
 	PGE_Asteroids app;
-	if(app.Construct(640, 480, 1, 1))
+	if(app.Construct(1280, 720, 1, 1))
 		app.Start();
 
 	return 0;
